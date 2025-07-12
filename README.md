@@ -1,0 +1,2 @@
+# WPStaticify
+WordPress Staticify
