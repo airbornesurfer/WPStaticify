@@ -7,4 +7,4 @@ Basically, it uses wget to download the site's contents, then searches through t
 
 USAGE:
 
-.\Export-ProjectGorbachev.ps1 -LocalWordPressUrl "http://project-gorbachev.local" -LiveStaticUrl "https://airbornesurfer.com/project-gorbachev" -OutputDirectory "project-gorbachev-static-live"
+.\WPStaticify.ps1 -LocalWordPressUrl "http://project-gorbachev.local" -LiveStaticUrl "https://airbornesurfer.com/project-gorbachev" -OutputDirectory "project-gorbachev-static-live"
