@@ -82,8 +82,11 @@ try {
     # Define the arguments for wget in an array
     $wgetArgs = @(
         "--recursive",
+        "--level=1",
         "--no-clobber",
         "--page-requisites",
+        "--remote-encoding=UTF-8",
+        "--local-encoding=UTF-8",
         "--html-extension",
         "--convert-links",
         "--restrict-file-names=windows",
@@ -148,6 +151,50 @@ try {
 } catch {
     Write-Error "URL conversion failed: $($_.Exception.Message)"
     exit 1
+}
+
+# --- Step 3: Correct mojibakes ---
+
+Write-Host "`n--- Step 3: Correcting mojibakes in HTML files ---`n" -ForegroundColor Yellow
+
+# Define the find and replace pairs for common UTF-8 mojibake
+# All characters are defined using their Unicode escape codes,
+# making the entire script completely type-able.
+$replacements = @{
+    # Em-dash
+    ([char]0x00e2 + [char]0x20ac + [char]0x2014) = [char]0x2014
+    # En-dash
+    ([char]0x00e2 + [char]0x20ac + [char]0x2013) = [char]0x2013
+    # Curly Apostrophe
+    ([char]0x00e2 + [char]0x20ac + [char]0x2019) = [char]0x2019
+    # Opening Single Quote
+    ([char]0x00e2 + [char]0x20ac + [char]0x2018) = [char]0x2018
+    # Opening Double Quote
+    ([char]0x00e2 + [char]0x20ac + [char]0x201c) = [char]0x201c
+    # Closing Double Quote
+    ([char]0x00e2 + [char]0x20ac + [char]0x201d) = [char]0x201d
+    # Euro Sign
+    ([char]0x00e2 + [char]0x20ac + [char]0x20ac) = [char]0x20ac
+}
+
+# Get all the HTML files in the current directory and its subdirectories
+Get-ChildItem -Path . -Recurse -Filter "*.html" | ForEach-Object {
+    $filePath = $_.FullName
+    Write-Host "Correcting characters in: $filePath"
+
+    # Read the file content as a single string.
+    $content = Get-Content -Path $filePath -Raw -Encoding UTF8
+
+    # Loop through the replacements and apply each one
+    foreach ($oldString in $replacements.Keys) {
+        $newString = $replacements[$oldString]
+        $content = $content.Replace($oldString, $newString)
+    }
+
+    # Write the corrected content back to the file.
+    # Set-Content should default to UTF8 without BOM in modern PowerShell
+    # but we'll be explicit to be safe.
+    Set-Content -Path $filePath -Value $content -Encoding UTF8 -Force
 }
 
 Write-Host "`n--- Script Finished ---`n" -ForegroundColor Cyan
